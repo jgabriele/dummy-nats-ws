@@ -6,10 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "run-chatserver": "node sidecar/chatserver.js"
   },
   "dependencies": {
+    "@material-ui/core": "^4.12.1",
+    "nats": "^2.1.0",
+    "nats.ws": "^1.2.0",
     "next": "11.0.1",
+    "ngsapi-js": "file:./ngsapi-js-0.0.9.tgz",
+    "nkeys.js": "^1.0.0-9",
     "react": "17.0.2",
     "react-dom": "17.0.2"
   },

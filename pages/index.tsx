@@ -1,69 +1,247 @@
+import React from 'react'
+import {
+  TextField,
+  Typography,
+  Grid,
+  Button,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+} from '@material-ui/core'
+import { connect, jwtAuthenticator, NatsConnection } from 'nats.ws'
 import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import { createUser } from 'nkeys.js'
+import * as ngsApi from 'ngsapi-js'
+
+type Message = {
+  subject: string
+  content: string
+  date: string
+}
+
+type Props = {
+  nats: NatsConnection | null
+}
+
+function SubscribeSection({ nats }: Props) {
+  const [value, setValue] = React.useState('')
+  const [subjects, setSubjects] = React.useState<string[]>([])
+  const [messages, setMessages] = React.useState<Message[]>([])
+
+  const onMessageReceived = React.useCallback(
+    (subject: string, err: any, message: string) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+
+      setMessages(
+        messages.concat({
+          subject,
+          content: message,
+          date: new Date().toISOString(),
+        })
+      )
+    },
+    [messages]
+  )
+
+  React.useEffect(() => {
+    const subscriptions = subjects.map((subject) =>
+      nats?.subscribe(subject, {
+        callback: (err, message) => {
+          onMessageReceived(
+            subject,
+            err,
+            new TextDecoder().decode(message.data)
+          )
+          return 'OK'
+        },
+      })
+    )
+    return () => {
+      subscriptions.forEach((sub) => sub?.unsubscribe())
+    }
+  }, [nats, onMessageReceived, subjects])
+
+  function addSubject() {
+    setSubjects(subjects.concat(value))
+    setValue('')
+  }
+
+  if (!nats) {
+    return null
+  }
+
+  return (
+    <>
+      <Grid container justifyContent="space-between">
+        <Grid item>
+          <Typography variant="h3" paragraph>
+            Subscribe
+          </Typography>
+        </Grid>
+        <Grid item>
+          <TextField
+            variant="outlined"
+            color="primary"
+            size="small"
+            label="Subject"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={addSubject}
+            disabled={subjects.some((sub) => sub === value)}
+          >
+            Add Subject
+          </Button>
+        </Grid>
+      </Grid>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Subject</TableCell>
+              <TableCell>Messages</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {subjects.map((subject) => (
+              <TableRow key={subject}>
+                <TableCell>{subject}</TableCell>
+                <TableCell>
+                  {messages
+                    .filter((msg) => msg.subject === subject)
+                    .map((msg) => (
+                      <div key={msg.date}>
+                        [{msg.date}] {msg.content}
+                      </div>
+                    ))}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </>
+  )
+}
+
+function PublishSection({ nats }: Props) {
+  const [subject, setSubject] = React.useState('')
+  const [message, setMessage] = React.useState('')
+  const [error, setError] = React.useState('')
+
+  function publishMessage() {
+    try {
+      nats?.publish(subject, new TextEncoder().encode(message))
+    } catch (e) {
+      if (e.message === 'CONNECTION_CLOSED') {
+        setError('Connection closed, please refresh the page')
+      }
+    }
+  }
+
+  return (
+    <>
+      <Typography variant="h3" paragraph>
+        Publish
+      </Typography>
+      {error && (
+        <Typography color="error" paragraph>
+          {error}
+        </Typography>
+      )}
+      <TextField
+        variant="outlined"
+        color="primary"
+        size="small"
+        label="Subject"
+        value={subject}
+        onChange={(e) => setSubject(e.target.value)}
+      />
+      <TextField
+        variant="outlined"
+        color="primary"
+        size="small"
+        label="Message"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={publishMessage}
+        disabled={!subject || !message}
+      >
+        Publish message
+      </Button>
+    </>
+  )
+}
 
 export default function Home() {
+  const [accountSeed, setAccountSeed] = React.useState('')
+  const [natsConnection, setNatsConnection] =
+    React.useState<NatsConnection | null>(null)
+
+  async function onClick() {
+    const ukp = createUser()
+    const jwt = await ngsApi.encodeUser(
+      `${Math.round(Math.random() * 100000)}`,
+      ukp,
+      accountSeed,
+      {
+        pub: {
+          allow: ['*'],
+          deny: [],
+        },
+        sub: {
+          allow: ['*'],
+          deny: [],
+        },
+        bearer_token: true,
+      }
+    )
+    const nc = await connect({
+      servers: ['wss://eu.geo.ngs.synadia-test.com'],
+      name: 'nats-ws',
+      debug: true,
+      authenticator: jwtAuthenticator(jwt),
+    })
+    setNatsConnection(nc)
+  }
+
   return (
-    <div className={styles.container}>
+    <div>
       <Head>
-        <title>Create Next App</title>
-        <meta name="description" content="Generated by create next app" />
+        <title>Chat with Nats</title>
+        <meta name="description" content="Chat app using NATS" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
+      <main>
+        Test
+        <TextField
+          variant="outlined"
+          color="primary"
+          size="small"
+          label="Account"
+          value={accountSeed}
+          onChange={(e) => setAccountSeed(e.target.value)}
+        />
+        <Button variant="outlined" color="primary" onClick={onClick}>
+          Connect with new user
+        </Button>
+        <SubscribeSection nats={natsConnection} />
+        <PublishSection nats={natsConnection} />
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
     </div>
   )
 }
