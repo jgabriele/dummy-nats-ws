@@ -242,8 +242,8 @@
 
 "@types/node@^14.0.26":
   version "14.17.5"
-  resolved "https://ric.jfrog.io/ric/api/npm/npm/@types/node/-/node-14.17.5.tgz#b59daf6a7ffa461b5648456ca59050ba8e40ed54"
-  integrity sha1-tZ2van/6RhtWSEVspZBQuo5A7VQ=
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.17.5.tgz#b59daf6a7ffa461b5648456ca59050ba8e40ed54"
+  integrity sha512-bjqH2cX/O33jXT/UmReo2pM7DIJREPMnarixbQ57DOOzzFaI6D2+IcwaJQaJpv0M1E9TIhPCYVxrkcityLjlqA==
 
 "@types/prop-types@*":
   version "15.7.4"
@@ -2140,8 +2140,8 @@ nats.ws@^1.2.0:
 
 nats@^2.1.0:
   version "2.1.0"
-  resolved "https://ric.jfrog.io/ric/api/npm/npm/nats/-/nats-2.1.0.tgz#1ff960710e257d0fa7855ad86562248659d644e4"
-  integrity sha1-H/lgcQ4lfQ+nhVrYZWIkhlnWROQ=
+  resolved "https://registry.yarnpkg.com/nats/-/nats-2.1.0.tgz#1ff960710e257d0fa7855ad86562248659d644e4"
+  integrity sha512-4SuNeQEwl3CwgnW7GyiQG82CWRrTPvPrtUp7Wi2hsmLI8PunIvitiMjwHXRMSFdMN7Cy97lguLRuORZcocVk0Q==
   dependencies:
     nkeys.js "^1.0.0-9"
 
@@ -3242,8 +3242,8 @@ tty-browserify@0.0.1:
 
 tweetnacl@^1.0.3:
   version "1.0.3"
-  resolved "https://ric.jfrog.io/ric/api/npm/npm/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
-  integrity sha1-rAr3FoBFjYpjeNDQ0FCrFAfTVZY=
+  resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
+  integrity sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
 
 type-check@^0.4.0, type-check@~0.4.0:
   version "0.4.0"
